@@ -50,13 +50,7 @@ export default function Header({ darkMode, handleThemeChange }: Props) {
           }}
         >
           <Box sx={{ display: "flex", alignItem: "center" }}>
-            <Typography
-              exact
-              variant="h6"
-              component={NavLink}
-              to="/"
-              sx={navStyles}
-            >
+            <Typography variant="h6" component={NavLink} to="/" sx={navStyles}>
               NetStore
             </Typography>
             <Switch checked={darkMode} onChange={handleThemeChange} />
