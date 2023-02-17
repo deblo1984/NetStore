@@ -25,13 +25,16 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseCors(opt => opt.AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials()
+        .WithOrigins("http://localhost:3000"));
+
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
 app.MapControllers();
-
-app.UseCors(opt => opt.AllowAnyHeader().AllowAnyMethod().SetIsOriginAllowed(origin => true).WithOrigins("http://localhost:3000"));
 
 
 var scope = app.Services.CreateScope();
@@ -39,7 +42,7 @@ var context = scope.ServiceProvider.GetRequiredService<StoreContext>();
 var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 try
 {
-    //context.Database.Migrate();
+    context.Database.MigrateAsync();
     DbInitializer.Initialize(context);
 }
 catch (Exception ex)
