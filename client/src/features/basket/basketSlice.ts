@@ -1,13 +1,41 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import agent from "../../api/agent";
 import { Basket } from "../../app/models/basket";
 
 interface BasketState {
   basket: Basket | null;
+  status: string;
 }
 
 const initialState: BasketState = {
   basket: null,
+  status: "idle",
 };
+
+export const addBasketItemAsync = createAsyncThunk<
+  Basket,
+  { productId: number; quantity?: number }
+>(
+  "basket/addBasketItemAsync",
+  async ({ productId, quantity = 1 }, thunkAPI) => {
+    try {
+      return await agent.basket.addItem(productId, quantity);
+    } catch (error: any) {
+      return thunkAPI.rejectWithValue({ error: error.data });
+    }
+  }
+);
+
+export const removeBasketItemAsync = createAsyncThunk<
+  void,
+  { productId: number; quantity: number }
+>("basket/removeBasketItemAsync", async ({ productId, quantity }, thunkAPI) => {
+  try {
+    await agent.basket.removeItem(productId, quantity);
+  } catch (error: any) {
+    return thunkAPI.rejectWithValue({ error: error.data });
+  }
+});
 
 export const basketSlice = createSlice({
   name: "basket",
@@ -16,8 +44,27 @@ export const basketSlice = createSlice({
     setBasket: (state, action) => {
       state.basket = action.payload;
     },
-    removeItem: (state, action) => {
-      const { productId, quantity } = action.payload;
+  },
+  extraReducers: (builder) => {
+    builder.addCase(addBasketItemAsync.pending, (state, action) => {
+      console.log(action);
+      state.status = "pendingAddItem" + action.meta.arg.productId;
+    });
+    builder.addCase(addBasketItemAsync.fulfilled, (state, action) => {
+      state.basket = action.payload;
+      state.status = "idle";
+    });
+    builder.addCase(addBasketItemAsync.rejected, (state, action) => {
+      state.status = "idle";
+      console.log(action.payload);
+    });
+    builder.addCase(removeBasketItemAsync.pending, (state, action) => {
+      console.log(action);
+      state.status = "pendingRemoveItem" + action.meta.arg.productId;
+    });
+    builder.addCase(removeBasketItemAsync.fulfilled, (state, action) => {
+      //state.status = "idle";
+      const { productId, quantity } = action.meta.arg;
       const itemIndex = state.basket?.items.findIndex(
         (i) => i.productId === productId
       );
@@ -25,8 +72,14 @@ export const basketSlice = createSlice({
       state.basket!.items[itemIndex].quantity -= quantity;
       if (state.basket?.items[itemIndex].quantity === 0)
         state.basket.items.splice(itemIndex, 1);
-    },
+
+      state.status = "idle";
+    });
+    builder.addCase(removeBasketItemAsync.rejected, (state, action) => {
+      state.status = "idle";
+      console.log(action.payload);
+    });
   },
 });
 
-export const { setBasket, removeItem } = basketSlice.actions;
+export const { setBasket } = basketSlice.actions;
