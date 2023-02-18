@@ -6,15 +6,15 @@ import {
   TableRow,
   TableCell,
 } from "@mui/material";
+import { useAppSelector } from "../../app/store/configureStore";
 import { currencyFormat } from "../../app/util/util";
-import { useStoreContext } from "../../context/StoreContext";
 
 interface Props {
   subtotal?: number;
 }
 
 export default function BasketSummary({ subtotal }: Props) {
-  const { basket } = useStoreContext();
+  const { basket } = useAppSelector((state) => state.basket);
   if (subtotal === undefined)
     subtotal =
       basket?.items.reduce(
