@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import agent from "../../api/agent";
 import { Basket } from "../../app/models/basket";
+import { getCookie } from "../../app/util/util";
 
 interface BasketState {
   basket: Basket | null;
@@ -11,6 +12,22 @@ const initialState: BasketState = {
   basket: null,
   status: "idle",
 };
+
+export const fetchBasketAsync = createAsyncThunk<Basket>(
+  "basket/fetchBasketAsync",
+  async (_, thunkAPI) => {
+    try {
+      return await agent.basket.get();
+    } catch (error: any) {
+      return thunkAPI.rejectWithValue({ error: error.data });
+    }
+  },
+  {
+    condition: () => {
+      if (!getCookie("buyerId")) return false;
+    },
+  }
+);
 
 export const addBasketItemAsync = createAsyncThunk<
   Basket,
@@ -44,10 +61,19 @@ export const basketSlice = createSlice({
     setBasket: (state, action) => {
       state.basket = action.payload;
     },
+    clearBasket: (state) => {
+      state.basket = null;
+    },
   },
   extraReducers: (builder) => {
+    builder.addCase(fetchBasketAsync.fulfilled, (state, action) => {
+      state.basket = action.payload;
+      state.status = "idle";
+    });
+    builder.addCase(fetchBasketAsync.rejected, (state, action) => {
+      state.status = "idle";
+    });
     builder.addCase(addBasketItemAsync.pending, (state, action) => {
-      console.log(action);
       state.status = "pendingAddItem" + action.meta.arg.productId;
     });
     builder.addCase(addBasketItemAsync.fulfilled, (state, action) => {
@@ -59,7 +85,6 @@ export const basketSlice = createSlice({
       console.log(action.payload);
     });
     builder.addCase(removeBasketItemAsync.pending, (state, action) => {
-      console.log(action);
       state.status = "pendingRemoveItem" + action.meta.arg.productId;
     });
     builder.addCase(removeBasketItemAsync.fulfilled, (state, action) => {
@@ -82,4 +107,4 @@ export const basketSlice = createSlice({
   },
 });
 
-export const { setBasket } = basketSlice.actions;
+export const { setBasket, clearBasket } = basketSlice.actions;

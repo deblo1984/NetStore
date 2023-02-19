@@ -13,6 +13,12 @@ const sleep = () => new Promise((resolve) => setTimeout(resolve, 500));
 
 const responseBody = (response: AxiosResponse) => response.data;
 
+axios.interceptors.request.use((config) => {
+  const token = JSON.parse(localStorage.getItem("user")!);
+  if (token) config.headers.Authorization = `Bearer ${token.token}`;
+  return config;
+});
+
 axios.interceptors.response.use(
   async (response) => {
     await sleep();
@@ -48,7 +54,7 @@ axios.interceptors.response.use(
   }
 );
 
-const request = {
+const requests = {
   get: (url: string, params?: URLSearchParams) =>
     axios.get(url, { params }).then(responseBody),
   post: (url: string, body: {}) => axios.post(url, body).then(responseBody),
@@ -57,31 +63,38 @@ const request = {
 };
 
 const catalog = {
-  list: (params: URLSearchParams) => request.get("products", params),
-  details: (id: number) => request.get(`products/${id}`),
-  fetchFilters: () => request.get("products/filters"),
+  list: (params: URLSearchParams) => requests.get("products", params),
+  details: (id: number) => requests.get(`products/${id}`),
+  fetchFilters: () => requests.get("products/filters"),
 };
 
 const testErrors = {
-  get400Error: () => request.get("buggy/bad-request"),
-  get401Error: () => request.get("buggy/unauthorized"),
-  get404Error: () => request.get("buggy/not-found"),
-  get500Error: () => request.get("buggy/server-error"),
-  getValidationError: () => request.get("buggy/validation-error"),
+  get400Error: () => requests.get("buggy/bad-request"),
+  get401Error: () => requests.get("buggy/unauthorized"),
+  get404Error: () => requests.get("buggy/not-found"),
+  get500Error: () => requests.get("buggy/server-error"),
+  getValidationError: () => requests.get("buggy/validation-error"),
 };
 
 const basket = {
-  get: () => request.get("basket"),
+  get: () => requests.get("basket"),
   addItem: (productId: number, quantity = 1) =>
-    request.post(`basket?productId=${productId}&quantity=${quantity}`, {}),
+    requests.post(`basket?productId=${productId}&quantity=${quantity}`, {}),
   removeItem: (productId: number, quantity = 1) =>
-    request.delete(`basket?productId=${productId}&quantity=${quantity}`),
+    requests.delete(`basket?productId=${productId}&quantity=${quantity}`),
+};
+
+const account = {
+  login: (values: any) => requests.post("account/login", values),
+  register: (values: any) => requests.post("account/register", values),
+  currentUser: () => requests.get("account/currentUser"),
 };
 
 const agent = {
   catalog,
   testErrors,
   basket,
+  account,
 };
 
 export default agent;
