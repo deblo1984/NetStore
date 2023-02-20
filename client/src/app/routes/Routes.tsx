@@ -10,12 +10,18 @@ import ContactPage from "../../features/contact/ContactPage";
 import NotFound from "../errors/NotFound";
 import ServerError from "../errors/ServerError";
 import App from "../layout/App";
+import RequireAuth from "./RequireAuth";
 
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
     children: [
+      //authenticated routes
+      {
+        element: <RequireAuth />,
+        children: [{ path: "/checkout", element: <CheckoutPage /> }],
+      },
       {
         path: "/catalog",
         element: <Catalog />,

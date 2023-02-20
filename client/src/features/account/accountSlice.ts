@@ -60,12 +60,24 @@ export const accountSlice = createSlice({
       router.navigate("/");
     },
     setUser: (state, action) => {
-      state.user = action.payload;
+      let claims = JSON.parse(atob(action.payload.token.split(".")[1]));
+      let roles =
+        claims["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+      state.user = {
+        ...action.payload,
+        roles: typeof roles === "string" ? [roles] : roles,
+      };
     },
   },
   extraReducers: (builder) => {
     builder.addCase(fetchCurrentUser.fulfilled, (state, action) => {
-      state.user = action.payload;
+      let claims = JSON.parse(atob(action.payload.token.split(".")[1]));
+      let roles =
+        claims["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+      state.user = {
+        ...action.payload,
+        roles: typeof roles === "string" ? [roles] : roles,
+      };
     });
     builder.addCase(fetchCurrentUser.rejected, (state) => {
       state.user = null;
@@ -74,7 +86,13 @@ export const accountSlice = createSlice({
       router.navigate("/login");
     });
     builder.addCase(signInUser.fulfilled, (state, action) => {
-      state.user = action.payload;
+      let claims = JSON.parse(atob(action.payload.token.split(".")[1]));
+      let roles =
+        claims["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+      state.user = {
+        ...action.payload,
+        roles: typeof roles === "string" ? [roles] : roles,
+      };
     });
     builder.addMatcher(isAnyOf(signInUser.rejected), (state, action) => {
       throw action.payload;
