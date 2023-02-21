@@ -1,56 +1,35 @@
-import { Grid, Paper } from "@mui/material";
-import { useEffect } from "react";
-import AppPagination from "../../app/components/AppPagination";
-import CheckBoxButton from "../../app/components/CheckboxButton";
-import RadioButtonGroup from "../../app/components/RadioButtonGroup";
-import LoadingComponent from "../../app/layout/LoadingComponent";
-import { useAppDispatch, useAppSelector } from "../../app/store/configureStore";
-import {
-  fetchFiltersAsync,
-  fetchProductsAsync,
-  productSelectors,
-  setPageNumber,
-  setProductParams,
-} from "./catalogSlice";
-import ProductList from "./ProductList";
-import ProductSearch from "./ProductSearch";
+import { Grid, Paper } from '@mui/material';
+import AppPagination from '../../app/components/AppPagination';
+import CheckBoxButton from '../../app/components/CheckboxButton';
+import RadioButtonGroup from '../../app/components/RadioButtonGroup';
+import useProducts from '../../app/hooks/useProducts';
+import LoadingComponent from '../../app/layout/LoadingComponent';
+import { useAppDispatch, useAppSelector } from '../../app/store/configureStore';
+import { setPageNumber, setProductParams } from './catalogSlice';
+import ProductList from './ProductList';
+import ProductSearch from './ProductSearch';
 
 const sortOptions = [
   {
-    value: "name",
-    label: "Alphabetical",
+    value: 'name',
+    label: 'Alphabetical',
   },
   {
-    value: "priceDesc",
-    label: "Price - High to Low",
+    value: 'priceDesc',
+    label: 'Price - High to Low',
   },
   {
-    value: "price",
-    label: "Price - Low To High",
+    value: 'price',
+    label: 'Price - Low To High',
   },
 ];
 
 export default function Catalog() {
-  const products = useAppSelector(productSelectors.selectAll);
-  const {
-    productsLoaded,
-    filtersLoaded,
-    brands,
-    types,
-    productParams,
-    metaData,
-  } = useAppSelector((state) => state.catalog);
+  const { products, brands, types, filtersLoaded, metaData } = useProducts();
+  const { productParams } = useAppSelector((state) => state.catalog);
   const dispatch = useAppDispatch();
 
-  useEffect(() => {
-    if (!productsLoaded) dispatch(fetchProductsAsync());
-  }, [dispatch, productsLoaded]);
-
-  useEffect(() => {
-    if (!filtersLoaded) dispatch(fetchFiltersAsync());
-  }, [dispatch, filtersLoaded]);
-
-  if (!filtersLoaded) return <LoadingComponent message="Loading products" />;
+  if (!filtersLoaded) return <LoadingComponent message='Loading products...' />;
   return (
     <Grid container spacing={4}>
       <Grid item xs={3}>
@@ -61,27 +40,21 @@ export default function Catalog() {
           <RadioButtonGroup
             selectedValue={productParams.orderBy}
             options={sortOptions}
-            onChange={(e) =>
-              dispatch(setProductParams({ orderBy: e.target.value }))
-            }
+            onChange={(e) => dispatch(setProductParams({ orderBy: e.target.value }))}
           />
         </Paper>
         <Paper sx={{ mb: 2, p: 2 }}>
           <CheckBoxButton
             items={brands}
             checked={productParams.brands}
-            onChange={(items: string[]) =>
-              dispatch(setProductParams({ brands: items }))
-            }
+            onChange={(items: string[]) => dispatch(setProductParams({ brands: items }))}
           />
         </Paper>
         <Paper sx={{ mb: 2, p: 2 }}>
           <CheckBoxButton
             items={types}
             checked={productParams.types}
-            onChange={(items: string[]) =>
-              dispatch(setProductParams({ types: items }))
-            }
+            onChange={(items: string[]) => dispatch(setProductParams({ types: items }))}
           />
         </Paper>
       </Grid>
@@ -93,9 +66,7 @@ export default function Catalog() {
         {metaData && (
           <AppPagination
             metaData={metaData}
-            onPageChange={(page: number) =>
-              dispatch(setPageNumber({ pageNumber: page }))
-            }
+            onPageChange={(page: number) => dispatch(setPageNumber({ pageNumber: page }))}
           />
         )}
       </Grid>
